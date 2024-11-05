@@ -185,18 +185,23 @@ TsneMusicVisualizer.prototype.loadMusicFromFileNode = function(fileNode){
 	this._loggerCallback("Loading song from file " + file.name) + "...";
 
 	var self = this;
-	reader.onloadend = function(evt) {
-		self._loggerCallback("File loaded");
-	  if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-		self._loadMusicFromBuffer(reader.result);
-
-		var createObjectUrl = webkitURL.createObjectURL || Url.createObjectURL;
-		var blob = new Blob([reader.result], {type: "audio/mpeg"});
-		url = createObjectUrl(blob);
-		self._audioNode.src = url;
-	  }
-	};
-	reader.readAsArrayBuffer(file);
+reader.onloadend = function(evt) {
+    self._loggerCallback("File loaded");
+    if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+        self._loadMusicFromBuffer(reader.result);
+        
+        // Modern URL API usage
+        const blob = new Blob([reader.result], {type: "audio/mpeg"});
+        const url = URL.createObjectURL(blob); // Use standard URL API
+        self._audioNode.src = url;
+        
+        // Add cleanup
+        self._audioNode.onended = () => {
+            URL.revokeObjectURL(url);
+        };
+    }
+};
+reader.readAsArrayBuffer(file);
 }
 
 TsneMusicVisualizer.prototype._getNChunks = function(){
